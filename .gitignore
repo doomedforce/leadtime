@@ -2,3 +2,5 @@
 *.env
 public/data.json
 __pycache__/
+cron/node_modules/
+cron/.cloudflare/

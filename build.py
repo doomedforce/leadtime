@@ -8,6 +8,7 @@ State lives in data/ and is committed, so view history survives between runs.
 """
 import json
 import os
+import re
 import statistics
 import sys
 import time
@@ -27,6 +28,38 @@ CURRENT_PAGES = 10                   # 20 films a page, most popular first
 BACKFILL_PAGES = 8                   # per half year
 ACTIVE_DAYS = 30                     # snapshot views for videos this young; also the snapshot retention
 CAMPAIGN_TYPES = {"Teaser", "Trailer"}
+# Official channels of US distributors, ranked by how many TMDB-listed official trailers they published.
+# Watching them directly catches a trailer within the hour, before TMDB lists it.
+STUDIO_CHANNELS = [
+    "UCJ6nMHaJPZvsJ-HmUmj1SeA",  # Lionsgate Movies
+    "UCjmJDM5pRKbUlVIzDYYWb6g",  # Warner Bros.
+    "UCF9imwPMSGz4Vq1NiTWCC7g",  # Paramount Pictures
+    "UCz97F7dMxBNOfGYu3rx8aCw",  # Sony Pictures Entertainment
+    "UCpy5dRhZd-JbZP4NsrnLt1w",  # NEON
+    "UCq0OueAsdxH6b8nyAspwViw",  # Universal Pictures
+    "UCuPivVjnfNo4mb3Oog_frZg",  # A24
+    "UCf5CjDJvsFvtVIhkfmKAwAA",  # Amazon MGM Studios
+    "UC2-BeLxzUBSs0uSrmzWhJuQ",  # 20th Century Studios
+    "UCQIjTyWmLEdsfqMQay0yGMA",  # Angel
+    "UCU4SM3j_9TNWaSu8KdGV50g",  # Focus Features
+    "UCb6-VM5UQ4Czj_d3m9EPGfg",  # MUBI
+    "UCOn923UnbV8H9zo_lO6ZCRw",  # Independent Film Company
+    "UCruD_lL-5fmllpKMSL-yCyQ",  # Sony Pictures Classics
+    "UCb9ME2w6Y_4jChUVlWdltVg",  # GKIDS Films
+    "UC_5niPa-d35gg88HaS7RrIw",  # Disney
+    "UCor9rW6PgxSQ9vUPWQdnaYQ",  # Searchlight Pictures
+    "UCvE8nyjdQG0_rgx9u3oqadw",  # Well Go USA Entertainment
+    "UCafnP6JPjVq8AahYaThUelg",  # Bleecker Street
+    "UCH45phx_o8pNt9PwbjxWhcA",  # Roadside Attractions
+    "UCpR3kmSyTYszJHWEcmpcnFQ",  # Vertical
+    "UCvC4D8onUfXzvjTOM-dBfEA",  # Marvel Entertainment
+    "UCfnXpb2MPBULONuZCyaKgmA",  # Briarcliff Entertainment
+    "UCiifkYAs_bq1pt_zbNAzYGg",  # DC
+    "UC_IRYSp4auq7hKLvziWVH6w",  # Pixar
+    "UCneoi6WTgRjMh4otvpwzv8w",  # Magnolia Pictures & Magnet Releasing
+    "UCnLF1F3-SWsuSJEh1qIJS9w",  # Black Bear
+]
+CHANNEL_LOOKBACK_HOURS = 48  # uploads older than this are TMDB's job
 MAX_LEAD = 1100                      # a "first trailer" 3+ years out is a data error, not a campaign
 
 
@@ -97,6 +130,41 @@ def views_at_24h(published, snaps, max_gap_hours=12):
     if t1 == t0:
         return v0
     return round(v0 + (v1 - v0) * (target - t0) / (t1 - t0))
+
+
+def norm_title(s):
+    return re.sub(r"[^a-z0-9]", "", s.lower())
+
+
+def match_upload(title, films, today):
+    """The tracked film a studio upload is a trailer or teaser for, or None.
+
+    The film's title must appear in the video title; the longest match wins
+    ("Wicked: For Good" over "Wicked"). Titles under 4 characters are too ambiguous to match.
+    """
+    if not re.search(r"trailer|teaser", title, re.I):
+        return None
+    t, recent, best = norm_title(title), str(today - timedelta(days=30)), None
+    for mid, f in films.items():
+        n = norm_title(f["title"])
+        if f["release"] >= recent and len(n) >= 4 and n in t:
+            if best is None or len(n) > len(norm_title(films[best]["title"])):
+                best = mid
+    return best
+
+
+def is_reupload(film, published, hours=6):
+    """Studios often post the same trailer twice within minutes (a vertical cut, a fixed re-upload)."""
+    t = datetime.fromisoformat(published.replace("Z", "+00:00"))
+    return any(abs(datetime.fromisoformat(v["published"].replace("Z", "+00:00")) - t) < timedelta(hours=hours)
+               for v in film["videos"])
+
+
+def keep_found(old, new):
+    """Carry over channel-found videos TMDB hasn't listed yet, so a refresh doesn't drop them."""
+    have = {v["key"] for v in new["videos"]}
+    extra = [v for v in (old or {}).get("videos", []) if v.get("found") == "channel" and v["key"] not in have]
+    return {**new, "videos": sorted(new["videos"] + extra, key=lambda v: v["published"])}
 
 
 def benchmark(films, today):
@@ -170,10 +238,38 @@ def refresh_films(films, ids, oldest):
         if not film["release"]:  # no US wide release, or a reissue: drop anything stored from an earlier run
             films.pop(str(mid), None)
         elif film["release"] >= str(oldest):
-            films[str(mid)] = film
+            films[str(mid)] = keep_found(films.get(str(mid)), film)
         # else: opened before the searched window (Jaws matched via its 2025 anniversary run); leave history as is
         if i % 50 == 49:
             print(f"  {i + 1} films", flush=True)
+
+
+def watch_channels(films, now):
+    """Add new studio trailers straight from YouTube, so their first-day views are caught."""
+    known = {v["key"] for f in films.values() for v in f["videos"]}
+    since = now - timedelta(hours=CHANNEL_LOOKBACK_HOURS)
+    found = 0
+    for channel in STUDIO_CHANNELS:
+        try:  # 1 quota unit each; one bad channel shouldn't stop the build
+            res = get_json("https://www.googleapis.com/youtube/v3/playlistItems?" + urllib.parse.urlencode(
+                {"part": "snippet", "playlistId": "UU" + channel[2:], "maxResults": 15,
+                 "key": os.environ["YOUTUBE_API_KEY"]}))
+        except urllib.error.HTTPError as e:
+            print(f"  channel {channel}: {e}", file=sys.stderr)
+            continue
+        for item in res.get("items", []):
+            s = item["snippet"]
+            key, title = s["resourceId"]["videoId"], s["title"]
+            if key in known or datetime.fromisoformat(s["publishedAt"].replace("Z", "+00:00")) < since:
+                continue
+            mid = match_upload(title, films, now.date())
+            if mid and not is_reupload(films[mid], s["publishedAt"]):
+                films[mid]["videos"].append({"key": key, "type": kind({"name": title}), "name": title,
+                                             "published": s["publishedAt"], "found": "channel"})
+                films[mid]["videos"].sort(key=lambda v: v["published"])
+                known.add(key)
+                found += 1
+    return found
 
 
 def snapshot_views(films, views, now):
@@ -232,6 +328,7 @@ def main():
             oldest = end - timedelta(days=182)
     print(f"refreshing {len(set(ids))} films", flush=True)
     refresh_films(films, ids, oldest)
+    print(f"{watch_channels(films, now)} new trailers found on studio channels", flush=True)
     n = snapshot_views(films, views, now)
 
     FILMS.parent.mkdir(exist_ok=True)

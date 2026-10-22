@@ -1,7 +1,35 @@
 """Offline checks for build.py. Run: python test_build.py"""
 from datetime import date
 
-from build import benchmark, days_out, film_from_tmdb, first_lead, is_reissue, kind, us_release, views_at_24h
+from build import (benchmark, days_out, film_from_tmdb, first_lead, is_reissue, is_reupload, keep_found, kind,
+                   match_upload, us_release, views_at_24h)
+
+# The same trailer posted twice within minutes counts once; a new trailer days later counts.
+rocky = {"videos": [{"published": "2026-10-22T16:00:00Z"}]}
+assert is_reupload(rocky, "2026-10-22T16:00:05Z")
+assert is_reupload(rocky, "2026-10-22T19:04:00Z")
+assert not is_reupload(rocky, "2026-10-25T16:00:00Z")
+
+# Studio uploads: matched by the film's title in the video title, longest title wins.
+tracked = {"1": {"title": "Wicked", "release": "2026-11-20"},
+           "2": {"title": "Wicked: For Good", "release": "2026-11-21"},
+           "3": {"title": "Us", "release": "2026-12-01"},
+           "4": {"title": "Old Film", "release": "2025-01-01"}}
+today = date(2026, 10, 22)
+assert match_upload("Wicked: For Good | Official Trailer 2", tracked, today) == "2"
+assert match_upload("WICKED - Final Trailer", tracked, today) == "1"
+assert match_upload("Wicked: For Good | Behind the Scenes", tracked, today) is None  # not a trailer
+assert match_upload("Us | Official Trailer", tracked, today) is None  # too short to match safely
+assert match_upload("Old Film | Anniversary Trailer", tracked, today) is None  # opened long ago
+assert match_upload("Something Else | Official Trailer", tracked, today) is None
+
+# A refresh from TMDB keeps channel-found videos TMDB hasn't listed yet, without duplicating ones it has.
+old = {"videos": [{"key": "a", "published": "2026-10-01T00:00:00Z", "found": "channel"},
+                  {"key": "b", "published": "2026-10-02T00:00:00Z", "found": "channel"},
+                  {"key": "c", "published": "2026-09-01T00:00:00Z"}]}
+new = {"title": "X", "videos": [{"key": "b", "published": "2026-10-02T00:00:00Z"}]}
+assert [v["key"] for v in keep_found(old, new)["videos"]] == ["a", "b"]  # c was TMDB's and is gone from TMDB
+assert keep_found(None, new) == new
 
 # TV spots filed as teasers are told apart by name.
 assert kind({"name": "Official Teaser Trailer"}) == "Teaser"

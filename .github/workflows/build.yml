@@ -2,7 +2,7 @@ name: Build and deploy
 
 on:
   schedule:
-    - cron: "11 * * * *" # hourly, so a new trailer's 24-hour mark falls between two snapshots
+    - cron: "41 */3 * * *" # fallback only: cron/ (a Cloudflare Worker) starts this hourly; GitHub skips most hours
   push:
     branches: [main]
     paths-ignore: ["data/**"]

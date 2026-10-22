@@ -9,7 +9,12 @@ and first-trailer benchmarks by genre. Home: trailermath.com.
 - `data/`: committed state. `films.json` is every film seen so far (the benchmark's history);
   `views.json` holds view snapshots for videos under 30 days old and each video's 24-hour figure.
 - `public/`: the static site (`#/` this week, `#/upcoming`, `#/benchmarks`, `#/film/<tmdb id>`).
-- `.github/workflows/build.yml`: runs hourly, commits `data/`, deploys to Cloudflare Pages.
+- `.github/workflows/build.yml`: commits `data/` and deploys to Cloudflare Pages.
+- `cron/`: a Cloudflare Worker (`trailermath-cron`) that starts the build at :11 every hour. GitHub's own
+  schedule skips most hours, so it is only a 3-hourly fallback. The Worker needs a `GITHUB_TOKEN` secret
+  (fine-grained, this repo only, "Actions: Read and write"). Redeploy with `cd cron && npm i && npx cf deploy`.
+- New trailers are also read straight from 27 studio YouTube channels (`STUDIO_CHANNELS` in `build.py`),
+  so a trailer is tracked within the hour it drops instead of whenever TMDB lists it.
 
 ## Keys
 
@@ -43,8 +48,9 @@ python -m http.server 8766 --directory public
 - Views are official YouTube uploads only. Studio "24-hour" claims add up every platform and channel.
 - A 24-hour figure exists only when Trailer Math saw the video within its first day, with snapshots on
   both sides of the 24-hour mark no more than 12 hours apart.
-- New trailers are found through TMDB, which its community updates, usually within hours. A trailer
-  added late gets no 24-hour figure. The upgrade is polling the studios' YouTube channels directly.
+- Trailers from studios outside `STUDIO_CHANNELS` are found through TMDB, usually within hours; one
+  added late gets no 24-hour figure. A channel upload is matched by the film's title appearing in the
+  video title, so titles under 4 characters are left to TMDB.
 - "Genre" is the film's first-listed TMDB genre.
 - YouTube's developer policies limit how long API data may be stored. Raw view snapshots are dropped
   after 30 days; check whether keeping the 24-hour figure longer is allowed before launch.
