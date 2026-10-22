@@ -32,7 +32,17 @@
   <p class="state">Loading campaigns…</p>
 </main>
 
+<!-- On every page; "trailermath" is the Buttondown username. -->
+<aside class="drop-band" aria-label="Newsletter">
+  <form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/trailermath" method="post" target="_blank">
+    <input type="hidden" name="embed" value="1">
+    <label for="drop-email"><b>The Drop</b> · this week's trailers and the new post, every Monday</label>
+    <div><input type="email" name="email" id="drop-email" placeholder="you@example.com" required autocomplete="email"><button>Subscribe</button></div>
+  </form>
+</aside>
+
 <footer class="foot">
+  <p class="plug">Also by Ameer Hassan: <a href="https://1rerun.com">Rerun</a>, every repertory and revival screening in Los Angeles, in one place.</p>
   <p><a href="#/method">How it works</a> · View counts are official YouTube uploads only, read by Trailer Math every hour, so they won't match studio totals that combine platforms. Film data from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
 </footer>
 <script src="/app.js"></script>

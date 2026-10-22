@@ -1,5 +1,4 @@
 const DAY = 864e5;
-const BUTTONDOWN_USER = "trailermath"; // the Buttondown newsletter's username
 const TZ = "America/Los_Angeles"; // the industry's clock
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -183,7 +182,7 @@ function blogView() {
   const [lead, ...rest] = data.posts || [];
   if (!lead) return `<div class="blog-head"><h1>The Trailer Math blog</h1>
     <p class="finding">Writing on selected campaigns, one film at a time. New posts every Monday.</p></div>
-    <p class="state">The first post lands Monday.</p>${signup()}`;
+    <p class="state">The first post lands Monday.</p>`;
   const film = (p) => data.films[p.film];
   return `<div class="blog-head"><h1>The Trailer Math blog</h1>
     <p class="finding">Writing on selected campaigns, one film at a time. New posts every Monday.</p></div>
@@ -194,7 +193,7 @@ function blogView() {
   ${rest.length ? `<h2 class="section-h more-h">Earlier posts</h2><ul class="cards">${rest.map((p) => `<li><a href="#/blog/${esc(p.slug)}">
       ${art(film(p), "w780", "card-art")}<p class="kicker">${film(p) ? esc(film(p).title) : ""}</p>
       <b>${esc(p.title)}</b><span class="sub">${postDate(p.date)} · ${p.minutes} min read</span></a></li>`).join("")}</ul>` : ""}
-  ${signup()}`;
+  `;
 }
 
 function postView(slug) {
@@ -216,7 +215,7 @@ function postView(slug) {
       ${film.videos.length ? strip(film, 300) : ""}
       <a class="text-play" href="#/film/${p.film}">Full campaign timeline →</a></aside>` : ""}</div>
   </article>
-  ${signup()}`;
+  `;
 }
 
 // ---------- How it works: what the numbers mean, so they can be trusted ----------
@@ -235,13 +234,6 @@ function methodView() {
     <h2>Limits</h2>
     <ul><li>YouTube only: no views from Instagram, TikTok or TV.</li><li>Trailers from studios outside the 27 channels are found through TMDB, sometimes a day late, and then have no 24-hour figure.</li><li>Release dates move. A film's days out are measured against its current date.</li></ul>
   </div>`;
-}
-
-function signup() {
-  return `<form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}" method="post" target="_blank">
-    <input type="hidden" name="embed" value="1">
-    <label for="drop-email"><b>The Drop</b> · this week's trailers and the new post, every Monday</label>
-    <div><input type="email" name="email" id="drop-email" placeholder="you@example.com" required autocomplete="email"><button>Subscribe</button></div></form>`;
 }
 
 function render() {

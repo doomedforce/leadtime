@@ -163,7 +163,11 @@ th.num, td.num { text-align: right; }
 .signup input::placeholder { color: var(--faint); }
 .signup button { height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--text); color: #000; font: inherit; font-weight: 500; cursor: pointer; }
 
+.drop-band { max-width: calc(var(--column) + 48px); margin: 0 auto; padding: 0 24px 56px; }
+.drop-band .signup { margin-top: 0; }
 .foot { border-top: 1px solid var(--border); }
+.foot .plug { padding-bottom: 0; color: var(--muted); font-size: 13px; }
+.foot .plug a { color: var(--text); }
 .foot p { max-width: calc(var(--column) + 48px); margin: 0 auto; padding: 24px 24px 40px; color: var(--faint); font-size: var(--fs-small); line-height: 18px; }
 .foot a { text-decoration: underline; text-underline-offset: 2px; }
 
@@ -181,6 +185,7 @@ th.num, td.num { text-align: right; }
   .bar { gap: 16px; padding: 0 16px; }
   .stamp { display: none; }
   .canvas { padding: 24px 16px 56px; }
+  .drop-band { padding: 0 16px 40px; }
   .thumb { width: 96px; }
   .facts { grid-template-columns: 1fr; }
   .facts div + div { border-left: 0; border-top: 1px solid var(--border); }
