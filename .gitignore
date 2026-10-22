@@ -5,3 +5,4 @@ __pycache__/
 cron/node_modules/
 cron/.cloudflare/
 public/f/
+cron/secrets.env

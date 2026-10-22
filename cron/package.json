@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "deploy": "cf deploy"
+    "deploy": "cf deploy --secrets-file secrets.env"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "2.0.0-beta.v.4",

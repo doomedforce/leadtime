@@ -13,7 +13,9 @@ and first-trailer benchmarks by genre. Home: trailermath.com.
 - `cron/`: a Cloudflare Worker (`trailermath-cron`) that starts the build at :11 every hour (and The Drop's
   draft on Mondays at 15:00 UTC). GitHub's own
   schedule skips most hours, so it is only a 3-hourly fallback. The Worker needs a `GITHUB_TOKEN` secret
-  (fine-grained, this repo only, "Actions: Read and write"). Redeploy with `cd cron && npm i && npx cf deploy`.
+  (fine-grained, this repo only, "Actions: Read and write"), kept in `cron/secrets.env` (gitignored) as
+  `GITHUB_TOKEN=...`. Redeploy with `cd cron && npm i && npm run deploy`, which uploads the secret with the
+  code. A plain `cf deploy` drops secrets added in the dashboard.
 - `posts/`: the blog, one Markdown file per post, published at `#/blog/<file name>`. Front matter:
   `title`, `date` (YYYY-MM-DD), `film` (TMDB id: adds the film's backdrop and a live campaign panel),
   `summary`, `author`, and `draft: true` to keep it unpublished. Supports paragraphs, `## headings`,
