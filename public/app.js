@@ -85,7 +85,7 @@ function upcomingView() {
 }
 
 // ---------- Film: the campaign as a strip toward opening day ----------
-function strip(film) {
+function strip(film, width = $("view").clientWidth - 44) {
   const g = genreStats[film.genre];
   const today = laDate(new Date());
   const toOpen = daysBetween(today, film.release);
@@ -94,7 +94,7 @@ function strip(film) {
   const max = Math.ceil(Math.max(...outs, g?.p75 || 0, toOpen, 30) / step) * step;
   const min = Math.min(0, ...outs);
   // Drawn at the strip's real width so 12px labels stay 12px on a phone; fewer ticks when narrow.
-  const W = Math.max(300, Math.min(1072, $("view").clientWidth - 44)), P = 12, Y = 34;
+  const W = Math.max(260, Math.min(1072, width)), P = 12, Y = 34;
   if (W < 600 && max / step > 4) step *= 2;
   const x = (d) => P + ((max - d) / (max - min || 1)) * (W - 2 * P);
   const ticks = [];
@@ -103,7 +103,7 @@ function strip(film) {
   return `<div class="strip"><svg viewBox="0 0 ${W} 72" role="img" aria-label="Campaign timeline: ${film.videos.length} videos between ${max} days out and opening">
     ${g ? `<rect class="iqr" x="${x(g.p75)}" y="${Y - 9}" width="${x(g.p25) - x(g.p75)}" height="18" rx="3"/><line class="med" x1="${x(g.median)}" x2="${x(g.median)}" y1="${Y - 16}" y2="${Y + 16}"/>` : ""}
     <line class="axis" x1="${P}" x2="${W - P}" y1="${Y}" y2="${Y}"/>
-    ${ticks.map((d) => `<g class="tick"><line x1="${x(d)}" x2="${x(d)}" y1="${Y + 8}" y2="${Y + 14}"/><text x="${x(d)}" y="${Y + 30}" text-anchor="${d === max ? "start" : "middle"}">${d} days</text></g>`).join("")}
+    ${ticks.map((d) => `<g class="tick"><line x1="${x(d)}" x2="${x(d)}" y1="${Y + 8}" y2="${Y + 14}"/>${x(0) - x(d) < 70 ? "" /* would collide with "Opening" */ : `<text x="${x(d)}" y="${Y + 30}" text-anchor="${d === max ? "start" : "middle"}">${d} days</text>`}</g>`).join("")}
     <g class="tick"><line x1="${x(0)}" x2="${x(0)}" y1="${Y - 12}" y2="${Y + 14}" style="stroke:var(--text)"/><text x="${x(0)}" y="${Y + 30}" text-anchor="${min < 0 ? "middle" : "end"}" style="fill:var(--text)">Opening</text></g>
     ${toOpen > 0 && toOpen < max ? `<line class="now" x1="${x(toOpen)}" x2="${x(toOpen)}" y1="${Y - 18}" y2="${Y + 6}"/><text class="lbl" x="${x(toOpen) + 5}" y="${Y - 10}">Today</text>` : ""}
     ${marks}
@@ -128,7 +128,7 @@ function filmView(id) {
     : toOpen > 0 ? `No official teaser or trailer yet, ${plural(toOpen, "day")} before opening.` : "No official teaser or trailer on record.";
   return `<a class="back" href="#/">← This week</a>
   <div class="film-head">${posterImg(film.poster)}<div><h1>${esc(film.title)}</h1><p class="finding">${finding}</p>
-    <p class="film-actions">${(data.notes || []).filter((n) => n.film === id).map((n) => `<a class="text-play" href="#/notes/${esc(n.slug)}">Note: ${esc(n.title)} →</a>`).join("")}
+    <p class="film-actions">${(data.posts || []).filter((p) => p.film === id).map((p) => `<a class="text-play" href="#/blog/${esc(p.slug)}">On the blog: ${esc(p.title)} →</a>`).join("")}
     <button class="copy" data-copy="/f/${esc(id)}.html">Copy share link</button></p></div></div>
   <dl class="facts">
     <div><dt>Opens in the US</dt><dd>${opens(film.release)} <small>${toOpen > 0 ? `in ${plural(toOpen, "day")}` : toOpen === 0 ? "today" : "opened"}</small></dd></div>
@@ -168,29 +168,54 @@ function benchmarksView() {
   <p class="finding" style="margin-top:16px;font-size:13px">Each bar is the middle half of a genre's campaigns, by days from the first official teaser or trailer to US opening; the tick is the median. Genres need at least 5 released films to appear. A film counts under its first-listed TMDB genre.</p>`;
 }
 
-// ---------- Notes: short written analysis of a campaign, from notes/*.md ----------
-const noteDate = (d) => releaseFmt(true).format(new Date(d + "T00:00:00Z"));
+// ---------- Blog: weekly writing on selected campaigns, from posts/*.md ----------
+const postDate = (d) => releaseFmt(true).format(new Date(d + "T00:00:00Z"));
+// The film's wide backdrop, else its poster; TMDB serves several sizes.
+const artFor = (film, size) => film?.backdrop ? `https://image.tmdb.org/t/p/${size}${film.backdrop}`
+  : film?.poster ? `https://image.tmdb.org/t/p/w500${film.poster}` : null;
+const art = (film, size, cls) => {
+  const src = artFor(film, size);
+  return src ? `<img class="${cls}" src="${esc(src)}" alt="" loading="lazy">` : `<div class="${cls} art-blank"></div>`;
+};
+const byline = (p) => [p.author && `By ${esc(p.author)}`, postDate(p.date), `${p.minutes} min read`].filter(Boolean).join(" · ");
 
-function notesView() {
-  const notes = data.notes || [];
-  return `<div class="title-row"><h1>Campaign notes</h1>
-    <p class="finding">Short reads on the week's most interesting rollout: when it landed, what it showed, and how it did.</p></div>
-  ${notes.length ? `<ul class="notes">${notes.map((n) => `<li><a href="#/notes/${esc(n.slug)}">
-      <span class="sub">${noteDate(n.date)}${n.film && data.films[n.film] ? ` · ${esc(data.films[n.film].title)}` : ""}</span>
-      <b>${esc(n.title)}</b>${n.summary ? `<span class="note-summary">${esc(n.summary)}</span>` : ""}</a></li>`).join("")}</ul>`
-    : `<p class="state">The first note is on its way.</p>`}
+function blogView() {
+  const [lead, ...rest] = data.posts || [];
+  if (!lead) return `<div class="blog-head"><h1>The Trailer Math blog</h1>
+    <p class="finding">Writing on selected campaigns, one film at a time. New posts every Monday.</p></div>
+    <p class="state">The first post lands Monday.</p>${signup()}`;
+  const film = (p) => data.films[p.film];
+  return `<div class="blog-head"><h1>The Trailer Math blog</h1>
+    <p class="finding">Writing on selected campaigns, one film at a time. New posts every Monday.</p></div>
+  <a class="feature" href="#/blog/${esc(lead.slug)}">${art(film(lead), "w1280", "feature-art")}
+    <div class="feature-text"><p class="kicker">Latest${film(lead) ? ` · ${esc(film(lead).title)}` : ""}</p>
+      <h2>${esc(lead.title)}</h2>${lead.summary ? `<p class="dek">${esc(lead.summary)}</p>` : ""}
+      <p class="sub">${byline(lead)}</p></div></a>
+  ${rest.length ? `<h2 class="section-h more-h">Earlier posts</h2><ul class="cards">${rest.map((p) => `<li><a href="#/blog/${esc(p.slug)}">
+      ${art(film(p), "w780", "card-art")}<p class="kicker">${film(p) ? esc(film(p).title) : ""}</p>
+      <b>${esc(p.title)}</b><span class="sub">${postDate(p.date)} · ${p.minutes} min read</span></a></li>`).join("")}</ul>` : ""}
   ${signup()}`;
 }
 
-function noteView(slug) {
-  const n = (data.notes || []).find((x) => x.slug === slug);
-  if (!n) return `<a class="back" href="#/notes">← Notes</a><p class="state">That note doesn't exist.</p>`;
-  const film = n.film && data.films[n.film];
-  return `<a class="back" href="#/notes">← Notes</a>
-  <article class="note"><p class="sub">${noteDate(n.date)}</p><h1>${esc(n.title)}</h1>
-    <div class="prose">${n.html}</div>
-    ${film ? `<p><a class="text-play" href="#/film/${n.film}">${esc(film.title)}: full campaign timeline →</a></p>` : ""}
-    <p><button class="copy" data-copy="/f/note-${esc(n.slug)}.html">Copy share link</button></p></article>
+function postView(slug) {
+  const p = (data.posts || []).find((x) => x.slug === slug);
+  if (!p) return `<a class="back" href="#/blog">← Blog</a><p class="state">That post doesn't exist.</p>`;
+  const film = p.film && data.films[p.film];
+  const g = film && genreStats[film.genre];
+  return `<a class="back" href="#/blog">← Blog</a>
+  <article class="post">
+    ${artFor(film, "w1280") ? art(film, "w1280", "post-hero") : ""}
+    <header class="post-head"><h1>${esc(p.title)}</h1>${p.summary ? `<p class="dek">${esc(p.summary)}</p>` : ""}
+      <p class="sub">${byline(p)} <button class="copy" data-copy="/f/post-${esc(p.slug)}.html">Copy share link</button></p></header>
+    <div class="post-body"><div class="prose">${p.html}</div>
+    ${film ? `<aside class="campaign-card"><h2 class="section-h">The campaign so far</h2>
+      <div class="who">${posterImg(film.poster)}<div><b><a href="#/film/${p.film}">${esc(film.title)}</a></b>
+        <span class="sub">Opens ${opens(film.release)} · ${esc(film.genre || "")}</span></div></div>
+      <dl class="mini-facts"><div><dt>First teaser or trailer</dt><dd>${film.lead != null ? `${film.lead} <small>days out</small>` : `<span class="dash">—</span>`}</dd></div>
+        <div><dt>${esc(film.genre || "Genre")} median</dt><dd>${g ? `${g.median} <small>days out</small>` : `<span class="dash">—</span>`}</dd></div></dl>
+      ${film.videos.length ? strip(film, 300) : ""}
+      <a class="text-play" href="#/film/${p.film}">Full campaign timeline →</a></aside>` : ""}</div>
+  </article>
   ${signup()}`;
 }
 
@@ -215,16 +240,18 @@ function methodView() {
 function signup() {
   return `<form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}" method="post" target="_blank">
     <input type="hidden" name="embed" value="1">
-    <label for="drop-email"><b>The Drop</b> · this week's trailers and the note, every Monday</label>
+    <label for="drop-email"><b>The Drop</b> · this week's trailers and the new post, every Monday</label>
     <div><input type="email" name="email" id="drop-email" placeholder="you@example.com" required autocomplete="email"><button>Subscribe</button></div></form>`;
 }
 
 function render() {
   const [, route, id] = location.hash.split("/");
   const page = route === "upcoming" ? upcomingView() : route === "benchmarks" ? benchmarksView() : route === "film" ? filmView(id)
-    : route === "notes" ? (id ? noteView(decodeURIComponent(id)) : notesView()) : route === "method" ? methodView() : weekView();
+    // "notes" was the blog's first name; old links still land.
+    : route === "blog" || route === "notes" ? (id ? postView(decodeURIComponent(id)) : blogView())
+    : route === "method" ? methodView() : weekView();
   $("view").innerHTML = page;
-  const nav = route === "film" || route === "method" ? null : route || "week";
+  const nav = route === "film" || route === "method" ? null : route === "notes" ? "blog" : route || "week";
   document.querySelectorAll("[data-nav]").forEach((a) =>
     a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   const h1 = $("view").querySelector("h1");

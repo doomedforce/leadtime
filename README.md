@@ -14,11 +14,15 @@ and first-trailer benchmarks by genre. Home: trailermath.com.
   draft on Mondays at 15:00 UTC). GitHub's own
   schedule skips most hours, so it is only a 3-hourly fallback. The Worker needs a `GITHUB_TOKEN` secret
   (fine-grained, this repo only, "Actions: Read and write"). Redeploy with `cd cron && npm i && npx cf deploy`.
-- `notes/`: campaign notes, one Markdown file each, published at `#/notes/<file name>`. Front matter:
-  `title`, `date` (YYYY-MM-DD), `film` (TMDB id, optional), `summary`, and `draft: true` to keep it
-  unpublished. Supports paragraphs, `## headings`, `- lists`, `[links](...)`, `**bold**`, `*italics*`.
-- `public/f/`: generated share pages. `/f/<tmdb id>.html` and `/f/note-<slug>.html` carry the social preview
-  (title, description, poster) and forward to the real page. The site's "Copy share link" buttons use them.
+- `posts/`: the blog, one Markdown file per post, published at `#/blog/<file name>`. Front matter:
+  `title`, `date` (YYYY-MM-DD), `film` (TMDB id: adds the film's backdrop and a live campaign panel),
+  `summary`, `author`, and `draft: true` to keep it unpublished. Supports paragraphs, `## headings`,
+  `- lists`, `[links](...)`, `**bold**`, `*italics*`.
+- `new_post.py`: the weekly routine. `python new_post.py` lists this week's teasers and trailers;
+  `python new_post.py <tmdb id>` starts a draft post for next Monday with the film's real numbers filled in
+  and `[YOUR READ]` prompts for the analysis. Set `AUTHOR` in it once for your byline.
+- `public/f/`: generated share pages. `/f/<tmdb id>.html` and `/f/post-<slug>.html` carry the social preview
+  (title, description, image) and forward to the real page. The site's "Copy share link" buttons use them.
 - `drop.py` and `.github/workflows/drop.yml`: every Monday the Worker starts `drop.yml`, which saves this
   week's issue of The Drop as a Buttondown draft (needs a `BUTTONDOWN_API_KEY` secret). It never sends.
 - New trailers are also read straight from 27 studio YouTube channels (`STUDIO_CHANNELS` in `build.py`),

@@ -114,15 +114,34 @@ th.num, td.num { text-align: right; }
 .scale span { position: absolute; transform: translateX(-50%); color: var(--faint); font-size: var(--fs-small); }
 .scale span:first-child { transform: none; }
 
-/* Notes: a list of reads, and a single note set as prose at a readable measure. */
-.notes { list-style: none; margin: 0; padding: 0; }
-.notes li { border-top: 1px solid var(--border); }
-.notes a { display: block; padding: 16px 0; }
-.notes b { display: block; margin-top: 2px; font-size: 18px; line-height: 26px; font-weight: 600; }
-.notes a:hover b { text-decoration: underline; text-underline-offset: 3px; }
-.note-summary { display: block; margin-top: 4px; color: var(--muted); max-width: 72ch; }
-.note h1 { margin-top: 4px; margin-bottom: 20px; }
-.prose { max-width: 68ch; font-size: 16px; line-height: 26px; }
+/* Blog: editorial pages beside the data screens — bigger type, the film's own imagery, prose at a reading measure. */
+.blog-head { margin-bottom: 28px; }
+.blog-head h1 { font-size: 40px; line-height: 44px; letter-spacing: -0.02em; }
+.kicker { margin: 0 0 6px; color: var(--accent); font-size: 13px; font-weight: 500; }
+.dek { margin: 8px 0 10px; color: var(--muted); font-size: 18px; line-height: 27px; max-width: 60ch; }
+.art-blank { background: var(--raised); }
+.feature { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 28px; align-items: center; }
+.feature-art { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 12px; display: block; }
+.feature-text h2 { margin: 0; font-size: 32px; line-height: 38px; letter-spacing: -0.015em; font-weight: 600; }
+.feature:hover h2, .cards a:hover b { text-decoration: underline; text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.more-h { margin-top: 48px; }
+.cards { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 28px var(--gap); }
+.cards a { display: block; }
+.card-art { width: 100%; aspect-ratio: 16 / 9; object-fit: cover; border-radius: 10px; display: block; margin-bottom: 12px; }
+.cards b { display: block; margin-bottom: 4px; font-size: 18px; line-height: 25px; font-weight: 600; }
+.post-hero { width: 100%; aspect-ratio: 21 / 9; object-fit: cover; border-radius: 14px; display: block; margin-bottom: 28px; }
+.post-head { max-width: 760px; margin-bottom: 32px; }
+.post-head h1 { font-size: 40px; line-height: 46px; letter-spacing: -0.02em; }
+.post-head .sub { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; font-size: 13px; }
+.post-body { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 48px; align-items: start; }
+.campaign-card { position: sticky; top: 80px; padding: 18px 20px 20px; background: var(--surface); border-radius: var(--radius-card); }
+.campaign-card .who { margin-bottom: 14px; }
+.campaign-card .strip { padding: 4px 0 0; margin: 4px 0 12px; background: none; }
+.mini-facts { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin: 0 0 12px; }
+.mini-facts dt { color: var(--faint); font-size: 12px; }
+.mini-facts dd { margin: 2px 0 0; font-size: 22px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.mini-facts small { color: var(--faint); font-size: 12px; font-weight: 400; }
+.prose { max-width: 68ch; font-size: 17px; line-height: 28px; }
 .prose h2 { margin: 28px 0 8px; font-size: 18px; line-height: 26px; font-weight: 600; }
 .prose p, .prose ul { margin: 0 0 14px; }
 .prose a { text-decoration: underline; text-underline-offset: 3px; }
@@ -148,7 +167,17 @@ th.num, td.num { text-align: right; }
 .foot p { max-width: calc(var(--column) + 48px); margin: 0 auto; padding: 24px 24px 40px; color: var(--faint); font-size: var(--fs-small); line-height: 18px; }
 .foot a { text-decoration: underline; text-underline-offset: 2px; }
 
+@media (max-width: 960px) {
+  .post-body { grid-template-columns: 1fr; gap: 32px; }
+  .campaign-card { position: static; max-width: 560px; }
+  .cards { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
 @media (max-width: 860px) {
+  .feature { grid-template-columns: 1fr; gap: 16px; }
+  .blog-head h1, .post-head h1 { font-size: 30px; line-height: 36px; }
+  .feature-text h2 { font-size: 26px; line-height: 32px; }
+  .post-hero { aspect-ratio: 16 / 9; }
   .bar { gap: 16px; padding: 0 16px; }
   .stamp { display: none; }
   .canvas { padding: 24px 16px 56px; }
@@ -188,4 +217,7 @@ th.num, td.num { text-align: right; }
   .bench thead th:nth-child(3) { display: block; grid-column: 1 / -1; padding: 0; width: auto !important; }
   .axis-row { display: none; }
   .film-head .poster { width: 72px; }
+  .cards { grid-template-columns: 1fr; }
+  .dek { font-size: 16px; line-height: 24px; }
+  .prose { font-size: 16px; line-height: 26px; }
 }

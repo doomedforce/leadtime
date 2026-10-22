@@ -2,20 +2,20 @@
 from datetime import date
 
 from build import (benchmark, days_out, film_from_tmdb, first_lead, is_reissue, is_reupload, keep_found, kind,
-                   match_upload, md_to_html, parse_note, share_page, us_release, views_at_24h)
+                   match_upload, md_to_html, parse_post, share_page, us_release, views_at_24h)
 
-# Notes: the small Markdown subset, escaped, with only web and in-site links.
+# Posts: the small Markdown subset, escaped, with only web and in-site links.
 html = md_to_html("## Why now\n\nThe teaser is **101 days** out, *early* for\nhorror. [Film](#/film/1)\n\n- one\n- two <b>")
 assert html == ('<h2>Why now</h2>\n<p>The teaser is <strong>101 days</strong> out, <em>early</em> for horror. '
                 '<a href="#/film/1">Film</a></p>\n<ul><li>one</li><li>two &lt;b&gt;</li></ul>'), html
 assert "href" not in md_to_html("[x](javascript:alert(1))")  # left as plain text, never a link
-note = parse_note("---\ntitle: Slayground's early tease\ndate: 2026-10-23\nfilm: 123\n---\nBody.", "slayground")
-assert note["title"] == "Slayground's early tease" and note["film"] == "123" and note["html"] == "<p>Body.</p>"
-assert parse_note("---\ntitle: T\ndate: 2026-10-23\ndraft: true\n---\nBody.", "x") is None
+post = parse_post("---\ntitle: Slayground's early tease\ndate: 2026-10-23\nfilm: 123\n---\nBody.", "slayground")
+assert post["title"] == "Slayground's early tease" and post["film"] == "123" and post["html"] == "<p>Body.</p>" and post["minutes"] == 1
+assert parse_post("---\ntitle: T\ndate: 2026-10-23\ndraft: true\n---\nBody.", "x") is None
 for bad in ("No front matter", "---\ntitle: T\ndate: someday\n---\nBody."):
     try:
-        parse_note(bad, "x")
-        raise AssertionError("bad note accepted")
+        parse_post(bad, "x")
+        raise AssertionError("bad post accepted")
     except (ValueError, KeyError):
         pass
 
@@ -114,7 +114,7 @@ assert [r["genre"] for r in b["genres"]] == ["Horror"]
 assert b["genres"][0] == {"genre": "Horror", "n": 5, "median": 100, "p25": 90, "p75": 120}
 assert b["overall"] == {"n": 6, "median": 110}
 
-# The Drop: this week's teasers and trailers (not spots), what opens in the next 7 days, the week's note.
+# The Drop: this week's teasers and trailers (not spots), what opens in the next 7 days, the week's blog post.
 from datetime import datetime, timezone
 from drop import issue
 week = {"films": {
@@ -124,11 +124,26 @@ week = {"films": {
         {"type": "Trailer", "published": "2026-09-01T13:00:00Z", "h24": 5}]},
     "2": {"title": "Wicker", "release": "2026-10-23", "videos": [{"type": "Trailer", "published": "2026-08-01T00:00:00Z"}]},
     "3": {"title": "No Campaign", "release": "2026-10-23", "videos": []}},
-    "notes": [{"slug": "s", "title": "Early tease", "summary": "Why now.", "date": "2026-10-21"}]}
+    "posts": [{"slug": "s", "title": "Early tease", "summary": "Why now.", "date": "2026-10-21"}]}
 subject, body = issue(week, datetime(2026, 10, 22, 18, tzinfo=timezone.utc))
 assert subject == "The Drop: Slayground leads this week's trailers", subject
 assert "## Early tease" in body and "1.5M views in its first 24 hours" in body and "101 days out" in body
 assert body.count("Slayground") == 1  # the spot and the old trailer are left out
 assert "- Wicker (Fri Oct 23)" in body and "No Campaign" not in body, body
+
+# Weekly post helper: dated next Monday, a draft, the real numbers written out, prompts left for the author.
+from new_post import draft_post
+bench = {"genres": [{"genre": "Action", "n": 118, "median": 80, "p25": 45, "p75": 142}]}
+slay = {"title": "Slayground", "release": "2027-01-29", "genre": "Action", "videos": [
+    {"key": "p", "type": "Spot", "name": "Official Promo", "published": "2026-09-21T13:00:00Z"},
+    {"key": "t", "type": "Teaser", "name": "Official Teaser", "published": "2026-10-20T13:00:00Z"}]}
+name, text = draft_post("1442761", slay, {"t": {"h24": 1_400_000}}, bench, date(2026, 10, 22))
+assert name == "2026-10-26-slayground.md", name
+assert "draft: true" in text and "film: 1442761" in text
+assert "**101 days** before its January 29 opening" in text
+assert "21 days earlier than the median action campaign" in text and "inside the middle half" in text
+assert "- Oct 20: Official Teaser (teaser, 101 days out, 1.4 million views in its first 24 hours)" in text
+assert "[YOUR READ" in text
+assert parse_post(text, "x") is None  # stays unpublished until the author removes draft: true
 
 print("ok")

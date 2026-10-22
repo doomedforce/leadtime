@@ -29,12 +29,12 @@ def issue(data, now):
     # Only films with a campaign to speak of; the calendar also holds many with no official trailer.
     opening = sorted((f for f in data["films"].values() if f["videos"]
                       and today < date.fromisoformat(f["release"]) <= today + timedelta(days=7)), key=lambda f: f["release"])[:8]
-    note = next((n for n in data.get("notes", []) if date.fromisoformat(n["date"]) >= since.date()), None)
+    post = next((p for p in data.get("posts", []) if date.fromisoformat(p["date"]) >= since.date()), None)
     best = max((d for d in drops if d[1].get("h24")), key=lambda d: d[1]["h24"], default=None)
 
     lines = []
-    if note:
-        lines += [f"## {note['title']}", note["summary"], f"[Read the note]({SITE}/#/notes/{note['slug']})", ""]
+    if post:
+        lines += [f"## {post['title']}", post["summary"], f"[Read it on the blog]({SITE}/#/blog/{post['slug']})", ""]
     lines += [f"## This week's drops ({len(drops)})"]
     for f, v, mid in drops:
         out = (date.fromisoformat(f["release"]) - date.fromisoformat(v["published"][:10])).days

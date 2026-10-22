@@ -22,7 +22,7 @@ ROOT = Path(__file__).parent
 FILMS = ROOT / "data" / "films.json"  # {tmdb id: film with its videos}
 VIEWS = ROOT / "data" / "views.json"  # {youtube key: {"snaps": [[iso, views]], "h24": int | None}}
 OUT = ROOT / "public" / "data.json"
-NOTES = ROOT / "notes"                # campaign notes, one Markdown file each
+POSTS = ROOT / "posts"                # blog posts, one Markdown file each
 SHARE = ROOT / "public" / "f"         # per-film share pages (social previews), generated
 SITE = "https://trailermath.com"
 
@@ -182,7 +182,7 @@ def md_inline(s):
 
 
 def md_to_html(text):
-    """The Markdown notes need: paragraphs, ## headings, - lists, links, **bold**, *italics*."""
+    """The Markdown posts need: paragraphs, ## headings, - lists, links, **bold**, *italics*."""
     out = []
     for block in re.split(r"\n\s*\n", text.strip()):
         lines = block.strip().splitlines()
@@ -195,27 +195,35 @@ def md_to_html(text):
     return "\n".join(out)
 
 
-def parse_note(text, slug):
-    """A note file: `---` front matter (title, date, film, summary, draft), then Markdown. Drafts aren't published."""
+def parse_post(text, slug):
+    """A post file: `---` front matter (title, date, film, summary, author, draft), then Markdown.
+
+    Drafts aren't published.
+    """
     m = re.match(r"---\s*\n(.*?)\n---\s*\n(.*)", text, re.S)
     if not m:
-        raise ValueError(f"note {slug}: missing front matter")
+        raise ValueError(f"post {slug}: missing front matter")
     meta = dict(line.split(":", 1) for line in m.group(1).splitlines() if ":" in line)
     meta = {k.strip(): v.strip() for k, v in meta.items()}
     if meta.get("draft", "").lower() == "true":
         return None
     date.fromisoformat(meta["date"])  # fail the build on a bad date rather than mis-sorting
+    body = m.group(2)
     return {"slug": slug, "title": meta["title"], "date": meta["date"], "film": meta.get("film") or None,
-            "summary": meta.get("summary", ""), "html": md_to_html(m.group(2))}
+            "summary": meta.get("summary", ""), "author": meta.get("author", ""),
+            "minutes": max(1, round(len(body.split()) / 230)), "html": md_to_html(body)}
 
 
-def share_page(title, description, image, target):
-    """A tiny page social sites can read (they ignore #/ routes), sending people on to the real page."""
+def share_page(title, description, image, target, large=False):
+    """A tiny page social sites can read (they ignore #/ routes), sending people on to the real page.
+
+    `large` asks for a wide preview card, for landscape images (film backdrops).
+    """
     return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
 <title>{esc(title)}</title><meta name="description" content="{esc(description)}">
 <meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}">
 <meta property="og:site_name" content="Trailer Math"><meta property="og:type" content="article">
-{f'<meta property="og:image" content="{esc(image)}">' if image else ""}<meta name="twitter:card" content="summary">
+{f'<meta property="og:image" content="{esc(image)}">' if image else ""}<meta name="twitter:card" content="{"summary_large_image" if large else "summary"}">
 <meta http-equiv="refresh" content="0;url={esc(target)}"><link rel="canonical" href="{esc(target)}"></head>
 <body><a href="{esc(target)}">{esc(title)}</a></body></html>"""
 
@@ -269,6 +277,7 @@ def film_from_tmdb(d):
         "release": release,
         "genre": d["genres"][0]["name"] if d.get("genres") else None,
         "poster": d.get("poster_path"),
+        "backdrop": d.get("backdrop_path"),
         "videos": sorted(videos, key=lambda v: v["published"]),
     }
 
@@ -356,13 +365,13 @@ def write_site(films, views, now):
             snaps = rec.get("snaps") or []
             vids.append({**v, "views": snaps[-1][1] if snaps else None, "h24": rec.get("h24")})
         out[mid] = {**f, "videos": vids, "lead": first_lead(f)}
-    notes = [n for p in sorted(NOTES.glob("*.md")) if (n := parse_note(p.read_text("utf-8"), p.stem))]
-    notes.sort(key=lambda n: n["date"], reverse=True)
+    posts = [p for f in sorted(POSTS.glob("*.md")) if (p := parse_post(f.read_text("utf-8"), f.stem))]
+    posts.sort(key=lambda p: p["date"], reverse=True)
     data = {"updatedAt": now.isoformat(timespec="seconds"), "films": out,
-            "benchmark": benchmark(films, now.date()), "notes": notes}
+            "benchmark": benchmark(films, now.date()), "posts": posts}
     OUT.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
 
-    # Share pages: /f/<id>.html per film, /f/note-<slug>.html per note. Content is stable between runs,
+    # Share pages: /f/<id>.html per film, /f/post-<slug>.html per post. Content is stable between runs,
     # so the hourly deploy only uploads pages that changed.
     SHARE.mkdir(exist_ok=True)
     for mid, f in films.items():
@@ -372,11 +381,13 @@ def write_site(films, views, now):
         poster = f"https://image.tmdb.org/t/p/w500{f['poster']}" if f.get("poster") else None
         (SHARE / f"{mid}.html").write_text(
             share_page(f"{f['title']}: the trailer campaign", desc, poster, f"{SITE}/#/film/{mid}"), "utf-8")
-    for n in notes:
-        poster = films.get(n["film"] or "", {}).get("poster")
-        (SHARE / f"note-{n['slug']}.html").write_text(share_page(
-            n["title"], n["summary"] or "A campaign note from Trailer Math.",
-            f"https://image.tmdb.org/t/p/w500{poster}" if poster else None, f"{SITE}/#/notes/{n['slug']}"), "utf-8")
+    for p in posts:
+        film = films.get(p["film"] or "", {})
+        image = (f"https://image.tmdb.org/t/p/w1280{film['backdrop']}" if film.get("backdrop")
+                 else f"https://image.tmdb.org/t/p/w500{film['poster']}" if film.get("poster") else None)
+        (SHARE / f"post-{p['slug']}.html").write_text(share_page(
+            p["title"], p["summary"] or "From the Trailer Math blog.", image, f"{SITE}/#/blog/{p['slug']}",
+            large=bool(film.get("backdrop"))), "utf-8")
 
 
 def main():
