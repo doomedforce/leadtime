@@ -12,7 +12,7 @@ from datetime import date, datetime, timedelta, timezone
 
 from build import FILMS, POSTS, VIEWS, benchmark, days_out, first_lead
 
-AUTHOR = ""  # your byline, e.g. "Jane Doe"; shown on every post
+AUTHOR = "Ameer Hassan"  # the byline on every new post
 
 
 def fmt_views(n):

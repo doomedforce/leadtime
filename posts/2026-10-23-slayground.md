@@ -3,6 +3,7 @@ title: Slayground's teaser lands three weeks early
 date: 2026-10-23
 film: 1442761
 summary: A24 dropped the teaser 101 days out, ahead of the typical action campaign, and it passed 2 million views in two days.
+author: Ameer Hassan
 draft: true
 ---
 A24 released the official teaser for *Slayground* on October 20, **101 days** before its January 29 opening. That's 21 days earlier than the median action campaign on Trailer Math (80 days, across 118 released films), though still inside the middle half of action rollouts, which run from 45 to 142 days out.
