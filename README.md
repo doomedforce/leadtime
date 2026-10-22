@@ -1,8 +1,8 @@
-# Lead Time
+# Trailer Math
 
 How movies are marketed, trailer by trailer: every new official teaser and trailer, how many days
 before opening it dropped, and how it did in its first 24 hours on YouTube. Campaign timelines per film
-and first-trailer benchmarks by genre. Planned home: leadtime.film.
+and first-trailer benchmarks by genre. Home: trailermath.com.
 
 - `build.py`: pulls US wide releases from TMDB (60 days back to a year ahead), their official YouTube
   teasers and trailers, and hourly view counts from the YouTube Data API. Writes `public/data.json`.
@@ -41,7 +41,7 @@ python -m http.server 8766 --directory public
 ## Limits
 
 - Views are official YouTube uploads only. Studio "24-hour" claims add up every platform and channel.
-- A 24-hour figure exists only when Lead Time saw the video within its first day, with snapshots on
+- A 24-hour figure exists only when Trailer Math saw the video within its first day, with snapshots on
   both sides of the 24-hour mark no more than 12 hours apart.
 - New trailers are found through TMDB, which its community updates, usually within hours. A trailer
   added late gets no 24-hour figure. The upgrade is polling the studios' YouTube channels directly.

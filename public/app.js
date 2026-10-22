@@ -173,7 +173,7 @@ function render() {
   document.querySelectorAll("[data-nav]").forEach((a) =>
     a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   const h1 = $("view").querySelector("h1");
-  document.title = `${h1 ? h1.textContent + " — " : ""}Lead Time`;
+  document.title = `${h1 ? h1.textContent + " — " : ""}Trailer Math`;
   window.scrollTo(0, 0);
 }
 

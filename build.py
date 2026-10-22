@@ -1,4 +1,4 @@
-"""Build Lead Time's data: film campaigns from TMDB, trailer views from YouTube.
+"""Build Trailer Math's data: film campaigns from TMDB, trailer views from YouTube.
 
     python build.py                  # refresh current films, snapshot views, write public/data.json
     python build.py --backfill 3     # also load the last 3 years of releases (for the benchmark)

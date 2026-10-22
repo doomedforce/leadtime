@@ -16,7 +16,7 @@ permissions:
   contents: write # to commit data/ (view history lives in the repo)
 
 env:
-  PAGES_PROJECT: leadtime # the Cloudflare Pages project name
+  PAGES_PROJECT: trailermath # the Cloudflare Pages project name
 
 jobs:
   build:
@@ -35,8 +35,8 @@ jobs:
       # Pushes made with the workflow's own token don't trigger another run.
       - name: Save view history
         run: |
-          git config user.name "lead-time-bot"
-          git config user.email "lead-time-bot@users.noreply.github.com"
+          git config user.name "trailer-math-bot"
+          git config user.email "trailer-math-bot@users.noreply.github.com"
           git add data
           git diff --cached --quiet || (git commit -m "Update data" && git push)
       - uses: cloudflare/wrangler-action@v3
