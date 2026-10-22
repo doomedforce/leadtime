@@ -1,0 +1,161 @@
+/* True-black flat (taste-skill app style), one amber hue on the data: days out, the campaign marks. */
+:root {
+  --ground: #000000;
+  --surface: #111111;
+  --raised: #2a2a2a;
+  --border: #1a1a1a;
+  --rule: #161616;
+  --control: #444444;
+  --text: #ffffff;
+  --nav: #bbbbbb;
+  --muted: #b4b4b4;
+  --faint: #949494;
+  --accent: #f2b33d;
+  --band: #2b2414;
+  --radius-card: 20px;
+  --radius-media: 3px;
+  --gap: 14px;
+  --pad: 22px;
+  --column: 1120px;
+  --control-height: 36px;
+  --fs-title: 24px;
+  --fs-section: 16px;
+  --fs-kpi: 24px;
+  --fs-body: 14px;
+  --fs-small: 12px;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--ground); color: var(--text);
+  font: 400 var(--fs-body)/20px "Inter", system-ui, sans-serif; -webkit-font-smoothing: antialiased;
+}
+a { color: inherit; text-decoration: none; }
+:focus-visible { outline: 2px solid var(--text); outline-offset: 2px; }
+.num { font-variant-numeric: tabular-nums; }
+.hue { color: var(--accent); }
+.dash { color: var(--faint); }
+
+/* Shell: no sidebar, a 56px top bar over a centred column (three destinations). */
+.topbar { position: sticky; top: 0; z-index: 2; background: var(--ground); border-bottom: 1px solid var(--border); }
+.bar { display: flex; align-items: center; gap: 28px; max-width: calc(var(--column) + 48px); height: 56px; margin: 0 auto; padding: 0 24px; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 600; font-size: var(--fs-section); }
+.mark { width: 22px; height: 22px; fill: var(--muted); }
+.mark .mark-hue { fill: var(--accent); }
+.nav { display: flex; gap: 4px; }
+.nav a { display: inline-flex; align-items: center; height: var(--control-height); padding: 0 14px; border-radius: 999px; color: var(--nav); white-space: nowrap; }
+.nav a:hover { color: var(--text); }
+.nav a[aria-current="page"] { background: var(--text); color: #000; font-weight: 500; }
+.stamp { margin-left: auto; color: var(--faint); font-size: var(--fs-small); white-space: nowrap; }
+
+.canvas { max-width: calc(var(--column) + 48px); margin: 0 auto; padding: 32px 24px 72px; min-height: 60vh; }
+.title-row { margin-bottom: 28px; }
+h1 { margin: 0; font-size: var(--fs-title); line-height: 32px; font-weight: 600; letter-spacing: -0.01em; }
+.finding { margin: 6px 0 0; color: var(--muted); font-size: 15px; line-height: 22px; max-width: 72ch; }
+.finding strong { color: var(--text); font-weight: 500; }
+.section-h { margin: 0 0 12px; font-size: var(--fs-section); font-weight: 600; line-height: 24px; }
+section + section { margin-top: 44px; }
+.state { padding: 18px var(--pad); border-radius: 12px; background: var(--surface); color: var(--muted); margin: 0; }
+.back { display: inline-block; margin-bottom: 16px; color: var(--muted); }
+.back:hover { color: var(--text); }
+
+/* Tables: rules and alignment, grey sentence-case headers, no bands. */
+table { width: 100%; border-collapse: collapse; }
+th { padding: 0 12px 10px; color: var(--faint); font-size: 13px; font-weight: 400; text-align: left; white-space: nowrap; }
+td { padding: 12px; border-top: 1px solid var(--border); vertical-align: middle; }
+th:first-child, td:first-child { padding-left: 0; }
+th:last-child, td:last-child { padding-right: 0; }
+th.num, td.num { text-align: right; }
+.sub { display: block; color: var(--faint); font-size: var(--fs-small); line-height: 16px; margin-top: 2px; }
+.who { display: flex; align-items: center; gap: 14px; min-width: 0; }
+.who b { font-weight: 500; }
+.who b a:hover, .film-link:hover { text-decoration: underline; text-underline-offset: 3px; }
+.thumb { flex: none; width: 128px; aspect-ratio: 16 / 9; border-radius: var(--radius-media); background: var(--raised); object-fit: cover; display: block; }
+.poster { flex: none; width: 44px; aspect-ratio: 2 / 3; border-radius: var(--radius-media); background: var(--raised); object-fit: cover; display: block; }
+.pill { display: inline-block; flex: none; padding: 2px 9px; border-radius: 999px; background: #222222; font-size: var(--fs-small); font-weight: 500; line-height: 18px; white-space: nowrap; }
+.big { font-size: 18px; font-weight: 500; }
+.text-play { color: var(--muted); font-size: 13px; white-space: nowrap; }
+.text-play:hover { color: var(--text); }
+
+/* Film page: the campaign as a strip running toward opening day. */
+.film-head { display: flex; gap: 20px; align-items: flex-start; margin-bottom: 28px; }
+.film-head .poster { width: 96px; }
+.facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); margin: 0 0 32px; padding: 0; background: var(--surface); border-radius: var(--radius-card); }
+.facts div { padding: 18px var(--pad) 20px; }
+.facts div + div { border-left: 1px solid var(--border); }
+.facts dt { color: var(--faint); font-size: 13px; }
+.facts dd { margin: 4px 0 0; font-size: var(--fs-kpi); line-height: 30px; font-weight: 500; font-variant-numeric: tabular-nums; }
+.facts dd small { color: var(--faint); font-size: 14px; font-weight: 400; }
+.strip { background: var(--surface); border-radius: var(--radius-card); padding: 20px var(--pad) 12px; margin-bottom: 36px; }
+.strip svg { display: block; width: 100%; height: auto; overflow: visible; }
+.strip .axis { stroke: var(--control); stroke-width: 2; }
+.strip .tick text, .strip .lbl { fill: var(--faint); font-size: 12px; font-family: inherit; }
+.strip .tick line { stroke: var(--raised); }
+.strip .iqr { fill: var(--band); }
+.strip .med { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 3 3; }
+.strip .now { stroke: var(--text); stroke-width: 1; }
+.strip .trailer { fill: var(--accent); }
+.strip .teaser { fill: var(--surface); stroke: var(--accent); stroke-width: 2; }
+.strip .spot { fill: var(--muted); }
+.key { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 10px; color: var(--faint); font-size: var(--fs-small); }
+.key span { display: inline-flex; align-items: center; gap: 6px; }
+.key svg { width: 12px; height: 12px; }
+
+/* Benchmarks: one row per genre, the middle half as a band and the median as a tick, on one shared axis. */
+.bench td { padding-top: 14px; padding-bottom: 14px; }
+.range { position: relative; height: 24px; min-width: 240px; }
+.range .track { position: absolute; left: 0; right: 0; top: 11px; height: 2px; background: var(--raised); }
+.range .band { position: absolute; top: 6px; height: 12px; border-radius: 3px; background: var(--band); }
+.range .median { position: absolute; top: 2px; width: 3px; height: 20px; margin-left: -1px; border-radius: 2px; background: var(--accent); }
+.axis-row th { padding-bottom: 6px; }
+.scale { position: relative; height: 16px; }
+.scale span { position: absolute; transform: translateX(-50%); color: var(--faint); font-size: var(--fs-small); }
+.scale span:first-child { transform: none; }
+
+.foot { border-top: 1px solid var(--border); }
+.foot p { max-width: calc(var(--column) + 48px); margin: 0 auto; padding: 24px 24px 40px; color: var(--faint); font-size: var(--fs-small); line-height: 18px; }
+.foot a { text-decoration: underline; text-underline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .bar { gap: 16px; padding: 0 16px; }
+  .stamp { display: none; }
+  .canvas { padding: 24px 16px 56px; }
+  .thumb { width: 96px; }
+  .facts { grid-template-columns: 1fr; }
+  .facts div + div { border-left: 0; border-top: 1px solid var(--border); }
+}
+
+/* Phone: tables become two-line rows; the nav gets its own row. */
+@media (max-width: 640px) {
+  .bar { flex-wrap: wrap; height: auto; padding: 10px 16px; gap: 8px 16px; }
+  .nav { order: 3; width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .nav a { padding: 0 12px; }
+  h1 { font-size: 20px; line-height: 28px; }
+  thead { display: none; }
+  table, tbody, tr, td { display: block; }
+  /* Row: identity (and type) on top, days out on one line, then the figures side by side. */
+  tr { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px 12px; padding: 16px 0; border-top: 1px solid var(--border); }
+  td { padding: 0; border: 0; }
+  td:first-child { grid-column: span 2; }
+  td:first-child:nth-last-child(n+6) ~ td:nth-child(2) { justify-self: end; } /* the type pill, on the drops table */
+  td[data-k]::before { content: attr(data-k); display: block; color: var(--faint); font-size: var(--fs-small); line-height: 16px; }
+  td.lead-cell { grid-column: 1 / -1; }
+  td.lead-cell .sub { display: inline; margin-left: 6px; }
+  td.num { text-align: left; }
+  .thumb { width: 88px; }
+  .range { min-width: 0; }
+  /* Genre, film count and median on one line; the bar under them. */
+  .bench tr { grid-template-columns: minmax(0, 1fr) auto auto; align-items: baseline; gap: 4px 16px; }
+  .bench td:first-child { grid-column: auto; }
+  .bench td[data-k]::before { content: none; }
+  .bench td[data-k]::after { content: " films"; color: var(--faint); font-size: var(--fs-small); }
+  .bench td.range-cell { grid-column: 1 / -1; order: 3; }
+  .bench thead { display: block; }
+  .bench thead tr { border-top: 0; padding: 0 0 4px; }
+  .bench thead th { display: none; }
+  .bench thead th:nth-child(3) { display: block; grid-column: 1 / -1; padding: 0; width: auto !important; }
+  .axis-row { display: none; }
+  .film-head .poster { width: 72px; }
+}

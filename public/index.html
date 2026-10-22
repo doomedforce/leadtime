@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lead Time — how movies are marketed, trailer by trailer</title>
+<meta name="description" content="Every new teaser and trailer, how far before opening it dropped, and how it did in its first 24 hours. Campaign timelines and first-trailer benchmarks by genre.">
+<meta name="theme-color" content="#000000">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/app.css">
+</head>
+<body>
+<header class="topbar">
+  <div class="bar">
+    <a class="brand" href="#/" aria-label="Lead Time home">
+      <svg class="mark" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="11" width="16" height="2" rx="1"/><circle cx="5" cy="12" r="3" class="mark-hue"/><rect x="20" y="5" width="2" height="14" rx="1"/></svg>
+      <span>Lead Time</span>
+    </a>
+    <nav class="nav" aria-label="Sections">
+      <a href="#/" data-nav="week">This week</a>
+      <a href="#/upcoming" data-nav="upcoming">Upcoming</a>
+      <a href="#/benchmarks" data-nav="benchmarks">Benchmarks</a>
+    </nav>
+    <span class="stamp" id="stamp"></span>
+  </div>
+</header>
+
+<main class="canvas" id="view">
+  <p class="state">Loading campaigns…</p>
+</main>
+
+<footer class="foot">
+  <p>View counts are official YouTube uploads only, read by Lead Time every hour, so they won't match studio totals that combine platforms. Film data from <a href="https://www.themoviedb.org/">TMDB</a>. This product uses the TMDB API but is not endorsed or certified by TMDB.</p>
+</footer>
+<script src="/app.js"></script>
+</body>
+</html>
