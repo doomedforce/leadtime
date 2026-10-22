@@ -114,6 +114,36 @@ th.num, td.num { text-align: right; }
 .scale span { position: absolute; transform: translateX(-50%); color: var(--faint); font-size: var(--fs-small); }
 .scale span:first-child { transform: none; }
 
+/* Notes: a list of reads, and a single note set as prose at a readable measure. */
+.notes { list-style: none; margin: 0; padding: 0; }
+.notes li { border-top: 1px solid var(--border); }
+.notes a { display: block; padding: 16px 0; }
+.notes b { display: block; margin-top: 2px; font-size: 18px; line-height: 26px; font-weight: 600; }
+.notes a:hover b { text-decoration: underline; text-underline-offset: 3px; }
+.note-summary { display: block; margin-top: 4px; color: var(--muted); max-width: 72ch; }
+.note h1 { margin-top: 4px; margin-bottom: 20px; }
+.prose { max-width: 68ch; font-size: 16px; line-height: 26px; }
+.prose h2 { margin: 28px 0 8px; font-size: 18px; line-height: 26px; font-weight: 600; }
+.prose p, .prose ul { margin: 0 0 14px; }
+.prose a { text-decoration: underline; text-underline-offset: 3px; }
+.prose strong { font-weight: 600; }
+.film-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 16px; margin: 10px 0 0; }
+.copy {
+  height: 32px; padding: 0 14px; border: 1px solid var(--control); border-radius: 999px;
+  background: none; color: var(--text); font: inherit; font-size: 13px; cursor: pointer;
+}
+.copy:hover { background: var(--surface); }
+.signup { margin-top: 44px; padding: 20px var(--pad); background: var(--surface); border-radius: var(--radius-card); max-width: 640px; }
+.signup label { display: block; margin-bottom: 10px; color: var(--muted); }
+.signup label b { color: var(--text); font-weight: 600; }
+.signup div { display: flex; gap: 8px; }
+.signup input {
+  flex: 1; min-width: 0; height: 40px; padding: 0 16px; border: 1px solid var(--control); border-radius: 999px;
+  background: var(--ground); color: var(--text); font: inherit;
+}
+.signup input::placeholder { color: var(--faint); }
+.signup button { height: 40px; padding: 0 18px; border: 0; border-radius: 999px; background: var(--text); color: #000; font: inherit; font-weight: 500; cursor: pointer; }
+
 .foot { border-top: 1px solid var(--border); }
 .foot p { max-width: calc(var(--column) + 48px); margin: 0 auto; padding: 24px 24px 40px; color: var(--faint); font-size: var(--fs-small); line-height: 18px; }
 .foot a { text-decoration: underline; text-underline-offset: 2px; }

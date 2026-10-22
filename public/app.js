@@ -1,4 +1,5 @@
 const DAY = 864e5;
+const BUTTONDOWN_USER = "trailermath"; // the Buttondown newsletter's username
 const TZ = "America/Los_Angeles"; // the industry's clock
 const $ = (id) => document.getElementById(id);
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
@@ -126,7 +127,9 @@ function filmView(id) {
     ? `The first ${film.videos[0] && daysOut(film, film.videos[0]) === film.lead ? film.videos[0].type.toLowerCase() : "trailer"} landed ${plural(film.lead, "day")} before opening${vsMedian(film) ? `, ${vsMedian(film)}` : ""}.`
     : toOpen > 0 ? `No official teaser or trailer yet, ${plural(toOpen, "day")} before opening.` : "No official teaser or trailer on record.";
   return `<a class="back" href="#/">← This week</a>
-  <div class="film-head">${posterImg(film.poster)}<div><h1>${esc(film.title)}</h1><p class="finding">${finding}</p></div></div>
+  <div class="film-head">${posterImg(film.poster)}<div><h1>${esc(film.title)}</h1><p class="finding">${finding}</p>
+    <p class="film-actions">${(data.notes || []).filter((n) => n.film === id).map((n) => `<a class="text-play" href="#/notes/${esc(n.slug)}">Note: ${esc(n.title)} →</a>`).join("")}
+    <button class="copy" data-copy="/f/${esc(id)}.html">Copy share link</button></p></div></div>
   <dl class="facts">
     <div><dt>Opens in the US</dt><dd>${opens(film.release)} <small>${toOpen > 0 ? `in ${plural(toOpen, "day")}` : toOpen === 0 ? "today" : "opened"}</small></dd></div>
     <div><dt>First teaser or trailer</dt><dd>${film.lead != null ? `${film.lead} <small>days out</small>` : `<span class="dash">—</span>`}</dd></div>
@@ -165,11 +168,63 @@ function benchmarksView() {
   <p class="finding" style="margin-top:16px;font-size:13px">Each bar is the middle half of a genre's campaigns, by days from the first official teaser or trailer to US opening; the tick is the median. Genres need at least 5 released films to appear. A film counts under its first-listed TMDB genre.</p>`;
 }
 
+// ---------- Notes: short written analysis of a campaign, from notes/*.md ----------
+const noteDate = (d) => releaseFmt(true).format(new Date(d + "T00:00:00Z"));
+
+function notesView() {
+  const notes = data.notes || [];
+  return `<div class="title-row"><h1>Campaign notes</h1>
+    <p class="finding">Short reads on the week's most interesting rollout: when it landed, what it showed, and how it did.</p></div>
+  ${notes.length ? `<ul class="notes">${notes.map((n) => `<li><a href="#/notes/${esc(n.slug)}">
+      <span class="sub">${noteDate(n.date)}${n.film && data.films[n.film] ? ` · ${esc(data.films[n.film].title)}` : ""}</span>
+      <b>${esc(n.title)}</b>${n.summary ? `<span class="note-summary">${esc(n.summary)}</span>` : ""}</a></li>`).join("")}</ul>`
+    : `<p class="state">The first note is on its way.</p>`}
+  ${signup()}`;
+}
+
+function noteView(slug) {
+  const n = (data.notes || []).find((x) => x.slug === slug);
+  if (!n) return `<a class="back" href="#/notes">← Notes</a><p class="state">That note doesn't exist.</p>`;
+  const film = n.film && data.films[n.film];
+  return `<a class="back" href="#/notes">← Notes</a>
+  <article class="note"><p class="sub">${noteDate(n.date)}</p><h1>${esc(n.title)}</h1>
+    <div class="prose">${n.html}</div>
+    ${film ? `<p><a class="text-play" href="#/film/${n.film}">${esc(film.title)}: full campaign timeline →</a></p>` : ""}
+    <p><button class="copy" data-copy="/f/note-${esc(n.slug)}.html">Copy share link</button></p></article>
+  ${signup()}`;
+}
+
+// ---------- How it works: what the numbers mean, so they can be trusted ----------
+function methodView() {
+  const b = data.benchmark;
+  return `<div class="title-row"><h1>How Trailer Math works</h1></div>
+  <div class="prose">
+    <h2>What's tracked</h2>
+    <p>US wide releases from 60 days ago to a year ahead, plus ${plural(b.overall?.n || 0, "released film")} since mid-2023 for the benchmarks. Films and their official teasers and trailers come from <a href="https://www.themoviedb.org/">TMDB</a>. New trailers are also read straight from 27 studio YouTube channels, so most are tracked within the hour they drop.</p>
+    <h2>Days out</h2>
+    <p>The number of days between a video's publish date and the film's US wide opening. A film's lead time is the days out of its first official teaser or trailer. TV spots and clips don't count, and neither do re-releases of older films.</p>
+    <h2>First 24 hours</h2>
+    <p>Views on the official YouTube upload, 24 hours after it was published, read from snapshots taken every hour. Studio announcements usually add up every platform and channel, so their numbers run higher. This one is consistent from trailer to trailer, which is the point. A trailer only gets a figure if there's a snapshot on each side of its 24-hour mark, no more than 12 hours apart.</p>
+    <h2>Benchmarks</h2>
+    <p>Each film counts under its first-listed TMDB genre. Bars show the middle half of a genre's lead times and the median. Genres with fewer than 5 released films are left out.</p>
+    <h2>Limits</h2>
+    <ul><li>YouTube only: no views from Instagram, TikTok or TV.</li><li>Trailers from studios outside the 27 channels are found through TMDB, sometimes a day late, and then have no 24-hour figure.</li><li>Release dates move. A film's days out are measured against its current date.</li></ul>
+  </div>`;
+}
+
+function signup() {
+  return `<form class="signup" action="https://buttondown.com/api/emails/embed-subscribe/${BUTTONDOWN_USER}" method="post" target="_blank">
+    <input type="hidden" name="embed" value="1">
+    <label for="drop-email"><b>The Drop</b> · this week's trailers and the note, every Monday</label>
+    <div><input type="email" name="email" id="drop-email" placeholder="you@example.com" required autocomplete="email"><button>Subscribe</button></div></form>`;
+}
+
 function render() {
   const [, route, id] = location.hash.split("/");
-  const page = route === "upcoming" ? upcomingView() : route === "benchmarks" ? benchmarksView() : route === "film" ? filmView(id) : weekView();
+  const page = route === "upcoming" ? upcomingView() : route === "benchmarks" ? benchmarksView() : route === "film" ? filmView(id)
+    : route === "notes" ? (id ? noteView(decodeURIComponent(id)) : notesView()) : route === "method" ? methodView() : weekView();
   $("view").innerHTML = page;
-  const nav = route === "film" ? null : route || "week";
+  const nav = route === "film" || route === "method" ? null : route || "week";
   document.querySelectorAll("[data-nav]").forEach((a) =>
     a.dataset.nav === nav ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
   const h1 = $("view").querySelector("h1");
@@ -192,4 +247,12 @@ async function load() {
 }
 
 addEventListener("hashchange", () => data && render());
+// Share links point at /f/ pages, which carry the social preview and forward to the real page.
+document.addEventListener("click", async (e) => {
+  const b = e.target.closest("button.copy");
+  if (!b) return;
+  const url = location.origin + b.dataset.copy;
+  try { await navigator.clipboard.writeText(url); b.textContent = "Link copied"; }
+  catch { prompt("Copy this link:", url); }
+});
 load();

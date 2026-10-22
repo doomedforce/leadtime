@@ -22,6 +22,9 @@ ROOT = Path(__file__).parent
 FILMS = ROOT / "data" / "films.json"  # {tmdb id: film with its videos}
 VIEWS = ROOT / "data" / "views.json"  # {youtube key: {"snaps": [[iso, views]], "h24": int | None}}
 OUT = ROOT / "public" / "data.json"
+NOTES = ROOT / "notes"                # campaign notes, one Markdown file each
+SHARE = ROOT / "public" / "f"         # per-film share pages (social previews), generated
+SITE = "https://trailermath.com"
 
 WINDOW_BACK, WINDOW_AHEAD = 60, 365  # days around today for "current" films
 CURRENT_PAGES = 10                   # 20 films a page, most popular first
@@ -167,6 +170,56 @@ def keep_found(old, new):
     return {**new, "videos": sorted(new["videos"] + extra, key=lambda v: v["published"])}
 
 
+def esc(s):
+    return str(s).replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace('"', "&quot;")
+
+
+def md_inline(s):
+    s = esc(s)
+    s = re.sub(r"\[([^\]]+)\]\(((?:https?://|#/)[^)\s]+)\)", r'<a href="\2">\1</a>', s)  # web and in-site links only
+    s = re.sub(r"\*\*(.+?)\*\*", r"<strong>\1</strong>", s)
+    return re.sub(r"\*(.+?)\*", r"<em>\1</em>", s)
+
+
+def md_to_html(text):
+    """The Markdown notes need: paragraphs, ## headings, - lists, links, **bold**, *italics*."""
+    out = []
+    for block in re.split(r"\n\s*\n", text.strip()):
+        lines = block.strip().splitlines()
+        if lines[0].startswith("## "):
+            out.append(f"<h2>{md_inline(lines[0][3:])}</h2>")
+        elif all(l.startswith("- ") for l in lines):
+            out.append("<ul>" + "".join(f"<li>{md_inline(l[2:])}</li>" for l in lines) + "</ul>")
+        else:
+            out.append(f"<p>{md_inline(' '.join(l.strip() for l in lines))}</p>")
+    return "\n".join(out)
+
+
+def parse_note(text, slug):
+    """A note file: `---` front matter (title, date, film, summary, draft), then Markdown. Drafts aren't published."""
+    m = re.match(r"---\s*\n(.*?)\n---\s*\n(.*)", text, re.S)
+    if not m:
+        raise ValueError(f"note {slug}: missing front matter")
+    meta = dict(line.split(":", 1) for line in m.group(1).splitlines() if ":" in line)
+    meta = {k.strip(): v.strip() for k, v in meta.items()}
+    if meta.get("draft", "").lower() == "true":
+        return None
+    date.fromisoformat(meta["date"])  # fail the build on a bad date rather than mis-sorting
+    return {"slug": slug, "title": meta["title"], "date": meta["date"], "film": meta.get("film") or None,
+            "summary": meta.get("summary", ""), "html": md_to_html(m.group(2))}
+
+
+def share_page(title, description, image, target):
+    """A tiny page social sites can read (they ignore #/ routes), sending people on to the real page."""
+    return f"""<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>{esc(title)}</title><meta name="description" content="{esc(description)}">
+<meta property="og:title" content="{esc(title)}"><meta property="og:description" content="{esc(description)}">
+<meta property="og:site_name" content="Trailer Math"><meta property="og:type" content="article">
+{f'<meta property="og:image" content="{esc(image)}">' if image else ""}<meta name="twitter:card" content="summary">
+<meta http-equiv="refresh" content="0;url={esc(target)}"><link rel="canonical" href="{esc(target)}"></head>
+<body><a href="{esc(target)}">{esc(title)}</a></body></html>"""
+
+
 def benchmark(films, today):
     """First-trailer lead time by primary genre, over films that have already opened."""
     by_genre = {}
@@ -303,9 +356,27 @@ def write_site(films, views, now):
             snaps = rec.get("snaps") or []
             vids.append({**v, "views": snaps[-1][1] if snaps else None, "h24": rec.get("h24")})
         out[mid] = {**f, "videos": vids, "lead": first_lead(f)}
+    notes = [n for p in sorted(NOTES.glob("*.md")) if (n := parse_note(p.read_text("utf-8"), p.stem))]
+    notes.sort(key=lambda n: n["date"], reverse=True)
     data = {"updatedAt": now.isoformat(timespec="seconds"), "films": out,
-            "benchmark": benchmark(films, now.date())}
+            "benchmark": benchmark(films, now.date()), "notes": notes}
     OUT.write_text(json.dumps(data, separators=(",", ":")), encoding="utf-8")
+
+    # Share pages: /f/<id>.html per film, /f/note-<slug>.html per note. Content is stable between runs,
+    # so the hourly deploy only uploads pages that changed.
+    SHARE.mkdir(exist_ok=True)
+    for mid, f in films.items():
+        lead = first_lead(f)
+        desc = (f"US opening {f['release']}. " + (f"First teaser or trailer: {lead} days out." if lead is not None
+                else "No official teaser or trailer yet.") + " Campaign timeline on Trailer Math.")
+        poster = f"https://image.tmdb.org/t/p/w500{f['poster']}" if f.get("poster") else None
+        (SHARE / f"{mid}.html").write_text(
+            share_page(f"{f['title']}: the trailer campaign", desc, poster, f"{SITE}/#/film/{mid}"), "utf-8")
+    for n in notes:
+        poster = films.get(n["film"] or "", {}).get("poster")
+        (SHARE / f"note-{n['slug']}.html").write_text(share_page(
+            n["title"], n["summary"] or "A campaign note from Trailer Math.",
+            f"https://image.tmdb.org/t/p/w500{poster}" if poster else None, f"{SITE}/#/notes/{n['slug']}"), "utf-8")
 
 
 def main():

@@ -1,0 +1,19 @@
+name: Draft The Drop
+
+# Started on Mondays by cron/ (the Cloudflare Worker). Only ever creates a Buttondown draft:
+# reviewing and sending stays in Buttondown.
+on:
+  workflow_dispatch:
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python drop.py --draft
+        env:
+          BUTTONDOWN_API_KEY: ${{ secrets.BUTTONDOWN_API_KEY }}

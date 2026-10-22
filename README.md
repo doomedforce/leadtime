@@ -10,9 +10,17 @@ and first-trailer benchmarks by genre. Home: trailermath.com.
   `views.json` holds view snapshots for videos under 30 days old and each video's 24-hour figure.
 - `public/`: the static site (`#/` this week, `#/upcoming`, `#/benchmarks`, `#/film/<tmdb id>`).
 - `.github/workflows/build.yml`: commits `data/` and deploys to Cloudflare Pages.
-- `cron/`: a Cloudflare Worker (`trailermath-cron`) that starts the build at :11 every hour. GitHub's own
+- `cron/`: a Cloudflare Worker (`trailermath-cron`) that starts the build at :11 every hour (and The Drop's
+  draft on Mondays at 15:00 UTC). GitHub's own
   schedule skips most hours, so it is only a 3-hourly fallback. The Worker needs a `GITHUB_TOKEN` secret
   (fine-grained, this repo only, "Actions: Read and write"). Redeploy with `cd cron && npm i && npx cf deploy`.
+- `notes/`: campaign notes, one Markdown file each, published at `#/notes/<file name>`. Front matter:
+  `title`, `date` (YYYY-MM-DD), `film` (TMDB id, optional), `summary`, and `draft: true` to keep it
+  unpublished. Supports paragraphs, `## headings`, `- lists`, `[links](...)`, `**bold**`, `*italics*`.
+- `public/f/`: generated share pages. `/f/<tmdb id>.html` and `/f/note-<slug>.html` carry the social preview
+  (title, description, poster) and forward to the real page. The site's "Copy share link" buttons use them.
+- `drop.py` and `.github/workflows/drop.yml`: every Monday the Worker starts `drop.yml`, which saves this
+  week's issue of The Drop as a Buttondown draft (needs a `BUTTONDOWN_API_KEY` secret). It never sends.
 - New trailers are also read straight from 27 studio YouTube channels (`STUDIO_CHANNELS` in `build.py`),
   so a trailer is tracked within the hour it drops instead of whenever TMDB lists it.
 
