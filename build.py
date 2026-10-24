@@ -164,10 +164,14 @@ def is_reupload(film, published, hours=6):
 
 
 def keep_found(old, new):
-    """Carry over channel-found videos TMDB hasn't listed yet, so a refresh doesn't drop them."""
+    """Carry over channel-found videos TMDB hasn't listed yet, so a refresh doesn't drop them.
+
+    If TMDB lists another upload of a channel-found trailer, the channel one stays: its views were caught from the start.
+    """
     have = {v["key"] for v in new["videos"]}
     extra = [v for v in (old or {}).get("videos", []) if v.get("found") == "channel" and v["key"] not in have]
-    return {**new, "videos": sorted(new["videos"] + extra, key=lambda v: v["published"])}
+    tmdb = [v for v in new["videos"] if not is_reupload({"videos": extra}, v["published"])]
+    return {**new, "videos": sorted(tmdb + extra, key=lambda v: v["published"])}
 
 
 def esc(s):

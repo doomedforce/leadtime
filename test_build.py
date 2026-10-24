@@ -50,6 +50,10 @@ old = {"videos": [{"key": "a", "published": "2026-10-01T00:00:00Z", "found": "ch
 new = {"title": "X", "videos": [{"key": "b", "published": "2026-10-02T00:00:00Z"}]}
 assert [v["key"] for v in keep_found(old, new)["videos"]] == ["a", "b"]  # c was TMDB's and is gone from TMDB
 assert keep_found(None, new) == new
+# I Play Rocky: the channel caught one upload, TMDB later listed the studio's other upload 23 seconds apart.
+old = {"videos": [{"key": "chan", "published": "2026-10-22T16:00:30Z", "found": "channel"}]}
+new = {"videos": [{"key": "tmdb", "published": "2026-10-22T16:00:07Z"}, {"key": "t1", "published": "2026-07-15T13:00:51Z"}]}
+assert [v["key"] for v in keep_found(old, new)["videos"]] == ["t1", "chan"]
 
 # TV spots filed as teasers are told apart by name.
 assert kind({"name": "Official Teaser Trailer"}) == "Teaser"
