@@ -299,7 +299,13 @@ def discover(start, end, pages):
 
 def refresh_films(films, ids, oldest):
     for i, mid in enumerate(dict.fromkeys(ids)):
-        d = tmdb(f"/movie/{mid}", append_to_response="videos,release_dates", include_video_language="en")
+        try:  # discover can list a film whose page TMDB has just removed; keep any stored copy and move on
+            d = tmdb(f"/movie/{mid}", append_to_response="videos,release_dates", include_video_language="en")
+        except urllib.error.HTTPError as e:
+            if e.code != 404:
+                raise
+            print(f"  skipped {mid}: not found on TMDB", flush=True)
+            continue
         film = film_from_tmdb(d)
         if not film["release"]:  # no US wide release, or a reissue: drop anything stored from an earlier run
             films.pop(str(mid), None)

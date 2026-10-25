@@ -162,4 +162,15 @@ build.snapshot_views({"1": {"videos": [{"key": "k", "published": "2026-10-22T16:
                      datetime(2026, 10, 23, tzinfo=timezone.utc))
 assert snapped["k"]["snaps"][-1][1] == 10 and snapped["k"]["likes"] == 3 and snapped["k"]["comments"] is None
 
+# A film TMDB lists but then 404s is skipped; stored films are kept.
+import io, urllib.error
+def fake_tmdb(path, **kw):
+    if path == "/movie/404":
+        raise urllib.error.HTTPError(path, 404, "Not Found", {}, io.BytesIO())
+    raise AssertionError("only the missing film is fetched")
+build.tmdb = fake_tmdb
+kept = {"404": {"title": "Gone"}}
+build.refresh_films(kept, [404], date(2026, 1, 1))
+assert kept == {"404": {"title": "Gone"}}
+
 print("ok")
