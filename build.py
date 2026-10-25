@@ -20,7 +20,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).parent
 FILMS = ROOT / "data" / "films.json"  # {tmdb id: film with its videos}
-VIEWS = ROOT / "data" / "views.json"  # {youtube key: {"snaps": [[iso, views]], "h24": int | None}}
+VIEWS = ROOT / "data" / "views.json"  # {youtube key: {"snaps": [[iso, views]], "h24", "likes", "comments": int | None}}
 OUT = ROOT / "public" / "data.json"
 POSTS = ROOT / "posts"                # blog posts, one Markdown file each
 SHARE = ROOT / "public" / "f"         # per-film share pages (social previews), generated
@@ -348,7 +348,12 @@ def snapshot_views(films, views, now):
             {"part": "statistics,snippet", "id": ",".join(keys[i:i + 50]), "key": os.environ["YOUTUBE_API_KEY"]}))
         for item in res.get("items", []):
             rec = views.setdefault(item["id"], {"snaps": [], "h24": None})
-            rec["snaps"].append([now.isoformat(timespec="seconds"), int(item["statistics"].get("viewCount", 0))])
+            stats = item["statistics"]
+            rec["snaps"].append([now.isoformat(timespec="seconds"), int(stats.get("viewCount", 0))])
+            # shortcut: latest counts only (frozen once the video is 30 days old); snapshot them if a 24h rate is needed.
+            # None when the uploader hides likes or turns comments off.
+            for field, name in (("likes", "likeCount"), ("comments", "commentCount")):
+                rec[field] = int(stats[name]) if name in stats else None
             active[item["id"]]["published"] = item["snippet"]["publishedAt"]  # YouTube's time beats TMDB's
             active[item["id"]]["channel"] = item["snippet"]["channelTitle"]
     for key, rec in views.items():
@@ -367,7 +372,8 @@ def write_site(films, views, now):
         for v in f["videos"]:
             rec = views.get(v["key"], {})
             snaps = rec.get("snaps") or []
-            vids.append({**v, "views": snaps[-1][1] if snaps else None, "h24": rec.get("h24")})
+            vids.append({**v, "views": snaps[-1][1] if snaps else None, "h24": rec.get("h24"),
+                         "likes": rec.get("likes"), "comments": rec.get("comments")})
         out[mid] = {**f, "videos": vids, "lead": first_lead(f)}
     posts = [p for f in sorted(POSTS.glob("*.md")) if (p := parse_post(f.read_text("utf-8"), f.stem))]
     posts.sort(key=lambda p: p["date"], reverse=True)

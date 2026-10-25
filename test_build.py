@@ -150,4 +150,16 @@ assert "- Oct 20: Official Teaser (teaser, 101 days out, 1.4 million views in it
 assert "[YOUR READ" in text
 assert parse_post(text, "x") is None  # stays unpublished until the author removes draft: true
 
+# Snapshots keep likes and comments; a hidden count stays None instead of 0.
+import os
+from datetime import datetime, timezone
+import build
+os.environ.setdefault("YOUTUBE_API_KEY", "test")
+build.get_json = lambda url: {"items": [{"id": "k", "statistics": {"viewCount": "10", "likeCount": "3"},
+                                         "snippet": {"publishedAt": "2026-10-22T16:00:00Z", "channelTitle": "A24"}}]}
+snapped = {}
+build.snapshot_views({"1": {"videos": [{"key": "k", "published": "2026-10-22T16:00:00Z"}]}}, snapped,
+                     datetime(2026, 10, 23, tzinfo=timezone.utc))
+assert snapped["k"]["snaps"][-1][1] == 10 and snapped["k"]["likes"] == 3 and snapped["k"]["comments"] is None
+
 print("ok")
