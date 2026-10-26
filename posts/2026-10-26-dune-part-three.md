@@ -4,7 +4,7 @@ date: 2026-10-26
 film: 1170608
 summary: Seven spots on trailer day, an exclusive IMAX window and an eight-month presale: how Dune is lining up against Avengers: Doomsday.
 author: Ameer Hassan
-publish: 2026-10-26T16:00:00Z
+publish: 2026-10-26T14:00:00Z
 ---
 The first official teaser for *Dune: Part Three* arrived on March 17, **276 days** before its December 18 opening. That's 132 days earlier than the median science fiction campaign on Trailer Math (144 days, across 36 released films), outside the middle half of science fiction rollouts (113 to 194 days out).
 
