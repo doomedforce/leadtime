@@ -163,15 +163,32 @@ def is_reupload(film, published, hours=6):
                for v in film["videos"])
 
 
-def keep_found(old, new):
+def keep_found(old, new, views_of=lambda keys: {}):
     """Carry over channel-found videos TMDB hasn't listed yet, so a refresh doesn't drop them.
 
-    If TMDB lists another upload of a channel-found trailer, the channel one stays: its views were caught from the start.
+    If TMDB lists another upload of a channel-found trailer, the copy with more views stays (the channel one on a tie):
+    the audience can pick the other upload (I Play Rocky: 1.3M first-day views against 1,815).
     """
     have = {v["key"] for v in new["videos"]}
     extra = [v for v in (old or {}).get("videos", []) if v.get("found") == "channel" and v["key"] not in have]
-    tmdb = [v for v in new["videos"] if not is_reupload({"videos": extra}, v["published"])]
+    dupes = [v for v in new["videos"] if is_reupload({"videos": extra}, v["published"])]
+    counts = views_of([v["key"] for v in dupes + extra]) if dupes else {}
+    tmdb = []
+    for v in new["videos"]:
+        twin = next((e for e in extra if is_reupload({"videos": [e]}, v["published"])), None)
+        if twin is None:
+            tmdb.append(v)
+        elif counts.get(v["key"], 0) > counts.get(twin["key"], 0):
+            extra.remove(twin)
+            tmdb.append(v)
     return {**new, "videos": sorted(tmdb + extra, key=lambda v: v["published"])}
+
+
+def youtube_views(keys):
+    """Current view counts (1 quota unit per call of up to 50). Private or deleted videos are left out."""
+    res = get_json("https://www.googleapis.com/youtube/v3/videos?" + urllib.parse.urlencode(
+        {"part": "statistics", "id": ",".join(keys), "key": os.environ["YOUTUBE_API_KEY"]}))
+    return {i["id"]: int(i["statistics"].get("viewCount", 0)) for i in res.get("items", [])}
 
 
 def esc(s):
@@ -313,7 +330,7 @@ def refresh_films(films, ids, oldest):
         if not film["release"]:  # no US wide release, or a reissue: drop anything stored from an earlier run
             films.pop(str(mid), None)
         elif film["release"] >= str(oldest):
-            films[str(mid)] = keep_found(films.get(str(mid)), film)
+            films[str(mid)] = keep_found(films.get(str(mid)), film, youtube_views)
         # else: opened before the searched window (Jaws matched via its 2025 anniversary run); leave history as is
         if i % 50 == 49:
             print(f"  {i + 1} films", flush=True)

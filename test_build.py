@@ -55,7 +55,10 @@ assert keep_found(None, new) == new
 # I Play Rocky: the channel caught one upload, TMDB later listed the studio's other upload 23 seconds apart.
 old = {"videos": [{"key": "chan", "published": "2026-10-22T16:00:30Z", "found": "channel"}]}
 new = {"videos": [{"key": "tmdb", "published": "2026-10-22T16:00:07Z"}, {"key": "t1", "published": "2026-07-15T13:00:51Z"}]}
-assert [v["key"] for v in keep_found(old, new)["videos"]] == ["t1", "chan"]
+assert [v["key"] for v in keep_found(old, new)["videos"]] == ["t1", "chan"]  # no counts: a tie, the channel copy stays
+# ...but the audience went to TMDB's upload, so that one is kept.
+assert [v["key"] for v in keep_found(old, new, lambda keys: {"tmdb": 1_293_340, "chan": 1_815})["videos"]] == ["t1", "tmdb"]
+assert [v["key"] for v in keep_found(old, new, lambda keys: {"tmdb": 10, "chan": 1_815})["videos"]] == ["t1", "chan"]
 
 # TV spots filed as teasers are told apart by name.
 assert kind({"name": "Official Teaser Trailer"}) == "Teaser"
