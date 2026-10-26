@@ -12,6 +12,8 @@ assert "href" not in md_to_html("[x](javascript:alert(1))")  # left as plain tex
 post = parse_post("---\ntitle: Slayground's early tease\ndate: 2026-10-23\nfilm: 123\n---\nBody.", "slayground")
 assert post["title"] == "Slayground's early tease" and post["film"] == "123" and post["html"] == "<p>Body.</p>" and post["minutes"] == 1
 assert parse_post("---\ntitle: T\ndate: 2026-10-23\ndraft: true\n---\nBody.", "x") is None
+assert parse_post("---\ntitle: T\ndate: 2026-10-23\npublish: 2999-01-01T16:00:00Z\n---\nBody.", "x") is None
+assert parse_post("---\ntitle: T\ndate: 2026-10-23\npublish: 2026-01-01T16:00:00Z\n---\nBody.", "x")
 for bad in ("No front matter", "---\ntitle: T\ndate: someday\n---\nBody."):
     try:
         parse_post(bad, "x")

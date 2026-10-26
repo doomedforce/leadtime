@@ -200,9 +200,9 @@ def md_to_html(text):
 
 
 def parse_post(text, slug):
-    """A post file: `---` front matter (title, date, film, summary, author, draft), then Markdown.
+    """A post file: `---` front matter (title, date, film, summary, author, draft, publish), then Markdown.
 
-    Drafts aren't published.
+    Drafts aren't published, and neither is a post before its `publish` time (ISO, e.g. 2026-10-26T16:00:00Z).
     """
     m = re.match(r"---\s*\n(.*?)\n---\s*\n(.*)", text, re.S)
     if not m:
@@ -210,6 +210,9 @@ def parse_post(text, slug):
     meta = dict(line.split(":", 1) for line in m.group(1).splitlines() if ":" in line)
     meta = {k.strip(): v.strip() for k, v in meta.items()}
     if meta.get("draft", "").lower() == "true":
+        return None
+    # shortcut: goes live with the first hourly build after this time (builds run at :11), not on the minute.
+    if meta.get("publish") and datetime.fromisoformat(meta["publish"]) > datetime.now(timezone.utc):
         return None
     date.fromisoformat(meta["date"])  # fail the build on a bad date rather than mis-sorting
     body = m.group(2)
